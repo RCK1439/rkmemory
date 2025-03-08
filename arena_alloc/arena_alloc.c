@@ -5,6 +5,17 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#if defined(__linux__)
+#define ARENA_OS_LINUX
+#include <sys/mman.h>
+#elif defined(_WIN32)
+#define ARENA_OS_WINDOWS
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#else
+#define ARENA_OS_UNKNOWN
+#endif
+
 #define DEFAULT_PAGE_SIZE (8 * 1024)
 
 #ifndef NDEBUG
@@ -32,6 +43,9 @@ static AllocPage *NewPage(size_t size, AllocPage *next);
 
 static void *AllocFromPage(AllocPage *page, size_t numBytes);
 
+static void *OsMalloc(size_t numBytes);
+static void OsFree(void *ptr, size_t numBytes);
+
 #ifndef NDEBUG
 static void ArenaPanic(const char *fmt, ...);
 #endif
@@ -58,11 +72,11 @@ void FreeArena(Arena *arena)
     {
         AllocPage *const q = p->next;
 
-        free(p);
+        OsFree(p, sizeof(AllocPage) + sizeof(uint8_t) * p->size);
         p = q;
     }
 
-    free(arena);
+    OsFree(arena, sizeof(Arena));
 }
 
 void *ArenaAlloc(Arena *arena, size_t numBytes)
@@ -146,7 +160,7 @@ void DebugArena(const Arena *arena)
 
 static Arena *NewArena(size_t pageSize)
 {
-    Arena *const arena = (Arena *)malloc(sizeof(Arena));
+    Arena *const arena = (Arena *)OsMalloc(sizeof(Arena));
     if (!arena)
     {
         return NULL;
@@ -169,7 +183,7 @@ static AllocPage *NewPage(size_t size, AllocPage *next)
     ARENA_ASSERT(size > 0, "Page size cannot be zero");
 
     const size_t numBytes = sizeof(AllocPage) + sizeof(uint8_t) * size;
-    AllocPage *const page = (AllocPage *)malloc(numBytes);
+    AllocPage *const page = (AllocPage *)OsMalloc(numBytes);
     if (!page)
     {
         return NULL;
@@ -191,6 +205,43 @@ static void *AllocFromPage(AllocPage *page, size_t numBytes)
     page->offset += numBytes;
 
     return ptr;
+}
+
+inline static void *OsMalloc(size_t numBytes)
+{
+#if defined(ARENA_OS_LINUX)
+    void *const ptr = mmap(NULL, numBytes, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+    if (ptr == MAP_FAILED)
+    {
+        return NULL;
+    }
+
+    return ptr;
+#elif defined(ARENA_OS_WINDOWS)
+    void *const ptr = VirtualAllocEx(GetCurrentProcess(), NULL, numBytes, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    if (ptr == NULL || ptr == INVALID_HANDLE_VALUE)
+    {
+        return NULL;
+    }
+
+    return ptr;
+#else
+    return malloc(numBytes);
+#endif
+}
+
+inline static void OsFree(void *ptr, size_t numBytes)
+{
+#if defined(ARENA_OS_LINUX)
+    const int r = munmap(ptr, numBytes);
+    ARENA_ASSERT(r == 0, "Failed to deallocate pointer: %p", ptr);
+#elif defined(ARENA_OS_WINDOWS)
+    const BOOL r = VirtualFreeEx(GetCurrentProcess(), (LPVOID)ptr, 0, numBytes, MEM_RELEASE);
+    ARENA_ASSERT(r == FALSE, "Failed to deallocate pointer: %p", ptr);
+#else
+    (void)numBytes;
+    free(ptr);
+#endif
 }
 
 #ifndef NDEBUG
