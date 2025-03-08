@@ -24,29 +24,86 @@
 #define ARENA_ASSERT(expr, ...) (void)0
 #endif
 
+/**
+ * This struct defines an allocation page in the arena
+ */
 typedef struct AllocPage
 {
-    uint8_t          *region;
-    size_t            offset;
-    size_t            size;
-    struct AllocPage *next;
+    uint8_t          *region; // The memory region of this page
+    size_t            offset; // The current offset into the memory region
+    size_t            size;   // The capacity of the memory region
+    struct AllocPage *next;   // A pointer to the next allocation page
 } AllocPage;
 
+/**
+ * This struct defines the memory arena
+ */
 typedef struct Arena
 {
-    size_t     pageSize;
-    AllocPage *curr;
+    size_t     pageSize; // The capacity of the allocation pages
+    AllocPage *curr;     // The head of the allocation page linked list
 } Arena;
 
+/**
+ * Creates a new arena
+ *
+ * @param[in] pageSize
+ *      The capacity of the allocation page memory regions
+ *
+ * @return
+ *      A pointer to the newly created arena, or `NULL` upon failure
+ */
 static Arena *NewArena(size_t pageSize);
+
+/**
+ * Creates a new allocation page
+ *
+ * @param[in] size
+ *      The capacity of the allocation page
+ * @param[in] next
+ *      A pointer to the next allocation page in the linked list
+ */
 static AllocPage *NewPage(size_t size, AllocPage *next);
 
+/**
+ * Allocates `numBytes` bytes of memory from `page`
+ *
+ * @param[in] page
+ *      The allocation page to allocate the memory from
+ * @param[in] numBytes
+ *      The number of bytes to allocate from the allocation page
+ *
+ * @return
+ *      A pointer to the newly allocated memory, or `NULL` upon failure
+ */
 static void *AllocFromPage(AllocPage *page, size_t numBytes);
 
+/**
+ * An operating system agnostic memory request function. This simply performs
+ * a syscall to request memory from the kernel
+ *
+ * @param[in] numBytes
+ *      The number of bytes to allocate
+ *
+ * @return
+ *      A pointer to the newly allocated memory, or `NULL` upon failure
+ */
 static void *OsMalloc(size_t numBytes);
+
+/**
+ * Frees the memory allocated at `ptr` by use of an operating system syscall
+ *
+ * @param[in] ptr
+ *      A pointer to the memory to deallocate
+ * @param[in] numBytes
+ *      The number of bytes to deallocate
+ */
 static void OsFree(void *ptr, size_t numBytes);
 
 #ifndef NDEBUG
+/**
+ * This is just a show stopper for is something horribly goes wrong
+ */
 static void ArenaPanic(const char *fmt, ...);
 #endif
 
@@ -140,14 +197,14 @@ void DebugArena(const Arena *arena)
     }
 
     printf("Arena {\n");
-    printf("\tpageSize=%lu\n", arena->pageSize);
+    printf("\tpageSize=%llu\n", arena->pageSize);
     printf("\tcurr=");
     
     AllocPage *p = arena->curr;
     while (p)
     {
         printf(
-            "AllocPage { region=%p, offset=%lu, size=%lu } -> ",
+            "AllocPage { region=%p, offset=%llu, size=%llu } -> ",
             (void *)p->region,
             p->offset,
             p->size
@@ -236,7 +293,7 @@ inline static void OsFree(void *ptr, size_t numBytes)
     const int r = munmap(ptr, numBytes);
     ARENA_ASSERT(r == 0, "Failed to deallocate pointer: %p", ptr);
 #elif defined(ARENA_OS_WINDOWS)
-    const BOOL r = VirtualFreeEx(GetCurrentProcess(), (LPVOID)ptr, 0, numBytes, MEM_RELEASE);
+    const BOOL r = VirtualFreeEx(GetCurrentProcess(), ptr, numBytes, MEM_RELEASE);
     ARENA_ASSERT(r == FALSE, "Failed to deallocate pointer: %p", ptr);
 #else
     (void)numBytes;
@@ -246,7 +303,7 @@ inline static void OsFree(void *ptr, size_t numBytes)
 
 #ifndef NDEBUG
 static void ArenaPanic(const char *fmt, ...)
-{
+{ 
     va_list args;
 
     va_start(args, fmt);

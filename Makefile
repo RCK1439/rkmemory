@@ -14,7 +14,7 @@ BIN_DIR = bin
 SRC_FILES = $(wildcard $(SRC_DIR)/*.c $(ARENA_ALLOC_DIR)/*.c)
 OBJ_FILES = $(patsubst %.c, $(BIN_DIR)/%.o, $(SRC_FILES))
 
-TARGET = $(BIN_DIR)/test_arena
+TARGET = $(BIN_DIR)/test_arena.exe
 
 .PHONY: all release clean
 

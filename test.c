@@ -15,7 +15,7 @@ int main(void)
     }
     DebugArena(arena);
 
-    printf("Allocating %lu bytes...\n", sizeof(int) * 5);
+    printf("Allocating %llu bytes...\n", sizeof(int) * 5);
     int *const arr = ArenaAlloc(arena, sizeof(int) * 5);
     if (!arr)
     {
