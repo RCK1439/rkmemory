@@ -5,24 +5,34 @@
 #include <stdint.h>
 #include <stdio.h>
 
+// --- platform dependent defines ---------------------------------------------
+
 #if defined(__linux__)
 #define ARENA_OS_LINUX
 #include <sys/mman.h>
+#define SIZE_T_FMT "%lu"
 #elif defined(_WIN32)
 #define ARENA_OS_WINDOWS
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#define SIZE_T_FMT "%llu"
 #else
 #define ARENA_OS_UNKNOWN
 #endif
 
+// --- constants --------------------------------------------------------------
+
 #define DEFAULT_PAGE_SIZE (8 * 1024)
+
+// --- macros -----------------------------------------------------------------
 
 #ifndef NDEBUG
 #define ARENA_ASSERT(expr, ...) if (!(expr)) ArenaPanic("Assertion Failed ("#expr"): " __VA_ARGS__)
 #else
 #define ARENA_ASSERT(expr, ...) (void)0
 #endif
+
+// --- type definitions -------------------------------------------------------
 
 /**
  * This struct defines an allocation page in the arena
@@ -43,6 +53,8 @@ typedef struct Arena
     size_t     pageSize; // The capacity of the allocation pages
     AllocPage *curr;     // The head of the allocation page linked list
 } Arena;
+
+// --- function prototypes ----------------------------------------------------
 
 /**
  * Creates a new arena
@@ -107,6 +119,8 @@ static void OsFree(void *ptr, size_t numBytes);
 static void ArenaPanic(const char *fmt, ...);
 #endif
 
+// --- arena interface --------------------------------------------------------
+
 Arena *CreateArena(void)
 {
     return NewArena(DEFAULT_PAGE_SIZE);
@@ -119,10 +133,7 @@ Arena *CreateArenaWithPageSize(size_t pageSize)
 
 void FreeArena(Arena *arena)
 {
-    if (!arena)
-    {
-        return;
-    }
+    ARENA_ASSERT(arena != NULL, "Cannot free a NULL arena");
 
     AllocPage *p = arena->curr;
     while (p)
@@ -136,13 +147,18 @@ void FreeArena(Arena *arena)
     OsFree(arena, sizeof(Arena));
 }
 
+void ResetArena(Arena *arena)
+{
+    ARENA_ASSERT(arena != NULL, "Cannot reset a NULL arena");
+    for (AllocPage *p = arena->curr; p; p = p->next)
+    {
+        p->offset = 0;
+    }
+}
+
 void *ArenaAlloc(Arena *arena, size_t numBytes)
 {
-    ARENA_ASSERT(arena->pageSize >= numBytes, "Cannot allocate bytes larger than page size");
-    if (!arena)
-    {
-        return NULL;
-    }
+    ARENA_ASSERT(arena != NULL, "Cannot allocate from NULL arena");
 
     AllocPage *const currPage = arena->curr;
     if (currPage->offset + numBytes > currPage->size)
@@ -165,6 +181,8 @@ void *ArenaAlloc(Arena *arena, size_t numBytes)
 
 void *ArenaAllocZeroed(Arena *arena, size_t numBytes)
 {
+    ARENA_ASSERT(arena != NULL, "Cannot allocate from NULL arena");
+
     void *const ptr = ArenaAlloc(arena, numBytes);
     if (!ptr)
     {
@@ -182,6 +200,8 @@ void *ArenaAllocZeroed(Arena *arena, size_t numBytes)
 
 void *ArenaRealloc(Arena *arena, void *ptr, size_t numBytes)
 {
+    ARENA_ASSERT(arena != NULL, "Cannot reallocate from NULL arena");
+
     (void)arena;
     (void)ptr;
     (void)numBytes;
@@ -197,23 +217,20 @@ void DebugArena(const Arena *arena)
     }
 
     printf("Arena {\n");
-    printf("\tpageSize=%llu\n", arena->pageSize);
+    printf("\tpageSize="SIZE_T_FMT"\n", arena->pageSize);
     printf("\tcurr=");
     
     AllocPage *p = arena->curr;
     while (p)
     {
-        printf(
-            "AllocPage { region=%p, offset=%llu, size=%llu } -> ",
-            (void *)p->region,
-            p->offset,
-            p->size
-        );
+        printf("AllocPage { region=%p, offset="SIZE_T_FMT", size="SIZE_T_FMT" } -> ", (void *)p->region, p->offset, p->size);
         p = p->next;
     }
     printf("NULL\n");
     printf("}\n");
 }
+
+// --- utility functions ------------------------------------------------------
 
 static Arena *NewArena(size_t pageSize)
 {
@@ -257,6 +274,7 @@ static AllocPage *NewPage(size_t size, AllocPage *next)
 static void *AllocFromPage(AllocPage *page, size_t numBytes)
 {
     ARENA_ASSERT(numBytes > 0, "Cannot allocate zero bytes");
+    ARENA_ASSERT(numBytes <= page->size, "Cannot allocate %lu bytes from a page size of %lu bytes", numBytes, page->size);
 
     void *const ptr = (void *)(page->region + page->offset);
     page->offset += numBytes;

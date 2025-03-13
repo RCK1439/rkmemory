@@ -3,8 +3,12 @@
 
 #include <stddef.h>
 
+// --- type definitions -------------------------------------------------------
+
 // Handle to the memory arena
 typedef struct Arena Arena;
+
+// --- arena interface --------------------------------------------------------
 
 /**
  * Creates an arena with a page size of 8KB (`8 * 1024` bytes)
@@ -32,6 +36,14 @@ Arena *CreateArenaWithPageSize(size_t pageSize);
  *      A pointer to the arena to deallocate
  */
 void FreeArena(Arena *arena);
+
+/**
+ * Resets the arena marker to the beginning of the allocated pages
+ *
+ * @param[in] arena
+ *      A pointer to the arena to reset
+ */
+void ResetArena(Arena *arena);
 
 /**
  * Allocates `numBytes` bytes in `arena`

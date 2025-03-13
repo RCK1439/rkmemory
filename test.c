@@ -4,6 +4,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#if defined(__linux__)
+#define SIZE_T_FMT "%lu"
+#elif defined(_WIN32)
+#define SIZE_T_FMT "%llu"
+#endif
+
 int main(void)
 {
     printf("Creating arena...\n");
@@ -15,7 +21,7 @@ int main(void)
     }
     DebugArena(arena);
 
-    printf("Allocating %llu bytes...\n", sizeof(int) * 5);
+    printf("Allocating "SIZE_T_FMT" bytes...\n", sizeof(int) * 5);
     int *const arr = ArenaAlloc(arena, sizeof(int) * 5);
     if (!arr)
     {
@@ -23,6 +29,9 @@ int main(void)
         FreeArena(arena);
         return EXIT_FAILURE;
     }
+    DebugArena(arena);
+
+    ResetArena(arena);
     DebugArena(arena);
 
     FreeArena(arena);
