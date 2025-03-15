@@ -274,7 +274,7 @@ static AllocPage *NewPage(size_t size, AllocPage *next)
 static void *AllocFromPage(AllocPage *page, size_t numBytes)
 {
     ARENA_ASSERT(numBytes > 0, "Cannot allocate zero bytes");
-    ARENA_ASSERT(numBytes <= page->size, "Cannot allocate %lu bytes from a page size of %lu bytes", numBytes, page->size);
+    ARENA_ASSERT(numBytes <= page->size, "Cannot allocate %lu bytes from a page size of "SIZE_T_FMT" bytes", numBytes, page->size);
 
     void *const ptr = (void *)(page->region + page->offset);
     page->offset += numBytes;
