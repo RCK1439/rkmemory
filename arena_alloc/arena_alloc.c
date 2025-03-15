@@ -198,14 +198,25 @@ void *ArenaAllocZeroed(Arena *arena, size_t numBytes)
     return ptr;
 }
 
-void *ArenaRealloc(Arena *arena, void *ptr, size_t numBytes)
+void *ArenaRealloc(Arena *arena, void *ptr, size_t oldSize, size_t newSize)
 {
     ARENA_ASSERT(arena != NULL, "Cannot reallocate from NULL arena");
+    ARENA_ASSERT(ptr != NULL, "Cannot reallocate a NULL pointer");
+    ARENA_ASSERT(oldSize <= newSize, "oldSize cannot be greater than newSize");
 
-    (void)arena;
-    (void)ptr;
-    (void)numBytes;
-    return NULL;
+    uint8_t *const newBytes = (uint8_t *)ArenaAlloc(arena, newSize);
+    if (!newBytes)
+    {
+        return NULL;
+    }
+
+    const uint8_t *const oldBytes = (uint8_t *)ptr;
+    for (size_t i = 0; i < oldSize; i++)
+    {
+        newBytes[i] = oldBytes[i];
+    }
+
+    return (void *)newBytes;
 }
 
 void DebugArena(const Arena *arena)
@@ -271,7 +282,7 @@ static AllocPage *NewPage(size_t size, AllocPage *next)
     return page;
 }
 
-static void *AllocFromPage(AllocPage *page, size_t numBytes)
+inline static void *AllocFromPage(AllocPage *page, size_t numBytes)
 {
     ARENA_ASSERT(numBytes > 0, "Cannot allocate zero bytes");
     ARENA_ASSERT(numBytes <= page->size, "Cannot allocate %lu bytes from a page size of "SIZE_T_FMT" bytes", numBytes, page->size);

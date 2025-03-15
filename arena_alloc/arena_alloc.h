@@ -79,10 +79,12 @@ void *ArenaAllocZeroed(Arena *arena, size_t numBytes);
  *      A pointer to the arena to reallocate in
  * @param[in] ptr
  *      A pointer to the region to reallocate
- * @param[in] numBytes
- *      The new size in bytes to give to the region
+ * @param[in] oldSize
+ *      The original size in bytes of the region
+ * @param[in] newSize
+ *      The new size in bytes of the region
  */
-void *ArenaRealloc(Arena *arena, void *ptr, size_t numBytes);
+void *ArenaRealloc(Arena *arena, void *ptr, size_t oldSize, size_t newSize);
 
 /**
  * Basic debugging function for testing use. This has to be removed before
