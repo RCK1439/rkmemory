@@ -13,27 +13,27 @@
 int main(void)
 {
     printf("Creating arena...\n");
-    Arena *const arena = CreateArenaWithPageSize(sizeof(int) * 20);
+    rkArena *const arena = rkCreateArenaWithPageSize(sizeof(int) * 20);
     if (!arena)
     {
         fprintf(stderr, "Failed to allocate arena\n");
         return EXIT_FAILURE;
     }
-    DebugArena(arena);
+    rkDebugArena(arena);
 
     printf("Allocating "SIZE_T_FMT" bytes...\n", sizeof(int) * 5);
-    int *const arr = ArenaAlloc(arena, sizeof(int) * 5);
+    int *const arr = rkArenaAlloc(arena, sizeof(int) * 5);
     if (!arr)
     {
         fprintf(stderr, "Failed to allocate bytes\n");
-        FreeArena(arena);
+        rkFreeArena(arena);
         return EXIT_FAILURE;
     }
-    DebugArena(arena);
+    rkDebugArena(arena);
 
-    ResetArena(arena);
-    DebugArena(arena);
+    rkResetArena(arena);
+    rkDebugArena(arena);
 
-    FreeArena(arena);
+    rkFreeArena(arena);
     return EXIT_SUCCESS;
 }

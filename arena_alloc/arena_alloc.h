@@ -6,7 +6,7 @@
 // --- type definitions -------------------------------------------------------
 
 // Handle to the memory arena
-typedef struct Arena Arena;
+typedef struct rkArena rkArena;
 
 // --- arena interface --------------------------------------------------------
 
@@ -16,7 +16,7 @@ typedef struct Arena Arena;
  * @return
  *      A pointer to the newly created arena, or `NULL` upon failure
  */
-Arena *CreateArena(void);
+rkArena *rkCreateArena(void);
 
 /**
  * Creates an arena with a specified page size
@@ -27,7 +27,7 @@ Arena *CreateArena(void);
  * @return
  *      A pointer to the newly created arena, or `NULL` upon failure
  */
-Arena *CreateArenaWithPageSize(size_t pageSize);
+rkArena *rkCreateArenaWithPageSize(size_t pageSize);
 
 /**
  * Frees the arena and all the memory allocated within it
@@ -35,7 +35,7 @@ Arena *CreateArenaWithPageSize(size_t pageSize);
  * @param[in] arena
  *      A pointer to the arena to deallocate
  */
-void FreeArena(Arena *arena);
+void rkFreeArena(rkArena *arena);
 
 /**
  * Resets the arena marker to the beginning of the allocated pages
@@ -43,7 +43,7 @@ void FreeArena(Arena *arena);
  * @param[in] arena
  *      A pointer to the arena to reset
  */
-void ResetArena(Arena *arena);
+void rkResetArena(rkArena *arena);
 
 /**
  * Allocates `numBytes` bytes in `arena`
@@ -56,7 +56,7 @@ void ResetArena(Arena *arena);
  * @return
  *      A pointer to the start of the allocated bytes, or `NULL` upon failure
  */
-void *ArenaAlloc(Arena *arena, size_t numBytes);
+void *rkArenaAlloc(rkArena *arena, size_t numBytes);
 
 /**
  * Allocates `numBytes` bytes in the `arena` and initializes the requested
@@ -70,7 +70,7 @@ void *ArenaAlloc(Arena *arena, size_t numBytes);
  * @return
  *      A pointer to the start of the allocated bytes, or `NULL` upon failure
  */
-void *ArenaAllocZeroed(Arena *arena, size_t numBytes);
+void *rkArenaAllocZeroed(rkArena *arena, size_t numBytes);
 
 /**
  * Resizes the region at `ptr` by `numBytes`
@@ -84,7 +84,7 @@ void *ArenaAllocZeroed(Arena *arena, size_t numBytes);
  * @param[in] newSize
  *      The new size in bytes of the region
  */
-void *ArenaRealloc(Arena *arena, void *ptr, size_t oldSize, size_t newSize);
+void *rkArenaRealloc(rkArena *arena, void *ptr, size_t oldSize, size_t newSize);
 
 /**
  * Basic debugging function for testing use. This has to be removed before
@@ -93,6 +93,6 @@ void *ArenaRealloc(Arena *arena, void *ptr, size_t oldSize, size_t newSize);
  * @param[in] arena
  *      A pointer to the arena to debug
  */
-void DebugArena(const Arena *arena);
+void rkDebugArena(const rkArena *arena);
 
 #endif /* ARENA_ALLOC_H */
