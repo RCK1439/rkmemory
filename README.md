@@ -5,7 +5,8 @@ An arena is a form of [region based memory allocation](https://en.wikipedia.org/
 
 ```c
 #include <stdio.h>
-#include <arena_alloc/arena_alloc.h>
+#define RK_ARENA_IMPLEMENTATION
+#include <rkmemory/rkarena.h>
 
 int main(void)
 {
