@@ -1,5 +1,5 @@
-# Arena-Alloc
-An arena is a form of [region based memory allocation](https://en.wikipedia.org/wiki/Region-based_memory_management). <b>arena-alloc</b> is a library that provides an interface for an arena allocator built entirely in C, for C/C++.
+# rkmemory
+An arena is a form of [region based memory allocation](https://en.wikipedia.org/wiki/Region-based_memory_management). <b>rkmemory</b> is a library that provides an interface for an arena allocator built entirely in C, for C/C++.
 
 ## Usage
 
