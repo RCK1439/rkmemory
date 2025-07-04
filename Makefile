@@ -1,6 +1,6 @@
-CC = clang
+CC = cc
 
-CFLAGS = -Wall -Werror -Wextra -Wpedantic -std=c99 -Wno-typedef-redefinition
+CFLAGS = -Wall -Werror -Wextra -Wpedantic
 ifeq ($(MAKECMDGOALS), release)
 	CFLAGS += -DNDEBUG -O3
 else
@@ -14,7 +14,7 @@ BIN_DIR = bin
 SRC_FILES = $(wildcard $(SRC_DIR)/*.c $(ARENA_ALLOC_DIR)/*.c)
 OBJ_FILES = $(patsubst %.c, $(BIN_DIR)/%.o, $(SRC_FILES))
 
-TARGET = $(BIN_DIR)/test_arena.exe
+TARGET = $(BIN_DIR)/test_arena
 
 .PHONY: all release clean
 

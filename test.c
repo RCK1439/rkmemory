@@ -1,4 +1,5 @@
-#include "arena_alloc/arena_alloc.h"
+#define RK_ARENA_IMPLEMENTATION
+#include "rkmemory/rkarena.h"
 
 #include <stdbool.h>
 #include <stdio.h>
