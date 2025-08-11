@@ -132,14 +132,6 @@ void rkDebugArena(const rkArena *arena);
 #    error "Unimplemented: I don't own an apple device to test this with"
 #endif
 
-#if defined(RK_ARENA_PLATFORM_LINUX)
-#   define SIZE_T_FMT "%lu"
-#elif defined(RK_ARENA_PLATFORM_WINDOWS)
-#   define SIZE_T_FMT "%llu"
-#elif defined(RK_ARENA_PLATFORM_APPLE)
-#    error "Unimplemented: I don't own an apple device to test this with"
-#endif
-
 // --- constants --------------------------------------------------------------
 
 #define DEFAULT_PAGE_SIZE (8 * 1024)
@@ -344,13 +336,13 @@ void rkDebugArena(const rkArena *arena)
     }
 
     printf("Arena {\n");
-    printf("\tpageSize="SIZE_T_FMT"\n", arena->pageSize);
+    printf("\tpageSize=%zu\n", arena->pageSize);
     printf("\tcurr=");
     
     rkAllocPage *p = arena->curr;
     while (p)
     {
-        printf("AllocPage { region=%p, offset="SIZE_T_FMT", size="SIZE_T_FMT" } -> ", (void *)p->region, p->offset, p->size);
+        printf("AllocPage { region=%p, offset=%zu, size=%zu } -> ", (void *)p->region, p->offset, p->size);
         p = p->next;
     }
     printf("NULL\n");
@@ -401,7 +393,7 @@ static rkAllocPage *rkNewPage(size_t size, rkAllocPage *next)
 inline static void *rkAllocFromPage(rkAllocPage *page, size_t numBytes)
 {
     RK_ARENA_ASSERT(numBytes > 0, "Cannot allocate zero bytes");
-    RK_ARENA_ASSERT(numBytes <= page->size, "Cannot allocate %lu bytes from a page size of "SIZE_T_FMT" bytes", numBytes, page->size);
+    RK_ARENA_ASSERT(numBytes <= page->size, "Cannot allocate %zu bytes from a page size of %zu bytes", numBytes, page->size);
 
     void *const ptr = (void *)(page->region + page->offset);
     page->offset += numBytes;
